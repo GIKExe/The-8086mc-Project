@@ -1,0 +1,15 @@
+{
+	"type": "minecraft:crafting_shaped",
+	"pattern": [
+		"###",
+		"###",
+		"###"
+	],
+	"key": {
+		"#": "the8086mc:metallurgical_silicon"
+	},
+	"result": {
+		"id": "the8086mc:metallurgical_silicon_block",
+		"count": 1
+	}
+}

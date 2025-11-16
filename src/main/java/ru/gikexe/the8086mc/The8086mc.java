@@ -1,7 +1,6 @@
 package ru.gikexe.the8086mc;
 
 import net.fabricmc.api.ModInitializer;
-import ru.gikexe.the8086mc.Item.ModItems;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,5 +12,6 @@ public class The8086mc implements ModInitializer {
 	@Override
 	public void onInitialize() {
 		ModItems.registerModItems();
+		ModBlocks.registerModBlocks();
 	}
 }
