@@ -10,7 +10,10 @@ import net.minecraft.world.item.Rarity;
 import ru.gikexe.the8086mc.The8086mc;
 
 public class ModItems {
-	public static final Item PURE_CRYSTAL = registerItem("pure_crystal", new Item.Properties().rarity(Rarity.RARE));
+	public static final Item METALLURGICAL_SILICON = registerItem("metallurgical_silicon",
+		new Item.Properties().rarity(Rarity.UNCOMMON));
+	public static final Item CARBON_QUARTZ_POWDER = registerItem("carbon_quartz_powder",
+		new Item.Properties());
 
 	private static Item registerItem(String name, Item.Properties properties) {
 		ResourceLocation id = ResourceLocation.fromNamespaceAndPath(The8086mc.MOD_ID, name);

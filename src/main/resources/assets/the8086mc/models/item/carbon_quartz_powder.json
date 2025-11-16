@@ -1,6 +1,6 @@
 {
 	"parent": "minecraft:item/generated",
 	"textures": {
-		"layer0": "the8086mc:item/pure_crystal"
+		"layer0": "the8086mc:item/carbon_quartz_powder"
 	}
 }
