@@ -1,0 +1,11 @@
+{
+	"type": "minecraft:crafting_shapeless",
+	"ingredients": [
+		"the8086mc:copper_wire",
+		"the8086mc:metal_shears"
+	],
+	"result": {
+		"id": "the8086mc:copper_contact",
+		"count": 4
+	}
+}

@@ -1,6 +1,8 @@
 package ru.gikexe.the8086mc;
 
 import net.fabricmc.api.ModInitializer;
+import ru.gikexe.the8086mc.Block.ModBlocks;
+import ru.gikexe.the8086mc.Item.ModItems;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

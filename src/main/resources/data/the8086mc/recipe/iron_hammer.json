@@ -1,0 +1,16 @@
+{
+	"type": "minecraft:crafting_shaped",
+	"pattern": [
+		" i ",
+		" /i",
+		"/  "
+	],
+	"key": {
+		"i": "minecraft:iron_ingot",
+		"/": "minecraft:stick"
+	},
+	"result": {
+		"id": "the8086mc:iron_hammer",
+		"count": 1
+	}
+}
