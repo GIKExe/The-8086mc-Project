@@ -1,0 +1,11 @@
+{
+	"type": "minecraft:crafting_shapeless",
+	"ingredients": [
+		"minecraft:iron_ingot",
+		"the8086mc:iron_hammer"
+	],
+	"result": {
+		"id": "the8086mc:iron_plate",
+		"count": 1
+	}
+}

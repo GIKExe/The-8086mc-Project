@@ -26,6 +26,7 @@ public class ModItems {
 	public static final Item COPPER_PLATE = registerItem("copper_plate");
 	public static final Item COPPER_WIRE = registerItem("copper_wire");
 	public static final Item COPPER_CONTACT = registerItem("copper_contact");
+	public static final Item IRON_PLATE = registerItem("iron_plate");
 
 
 	private static Properties newProperties() {
