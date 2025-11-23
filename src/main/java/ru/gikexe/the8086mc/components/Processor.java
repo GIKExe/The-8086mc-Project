@@ -64,17 +64,17 @@ public class Processor {
 	}
 
 	private Register selectRegister(char number) {
-        return switch (number) {
-            case 0 -> al;
-            case 1 -> cl;
-            case 2 -> dl;
-            case 3 -> bl;
-            case 4 -> ah;
-            case 5 -> ch;
-            case 6 -> dh;
-            case 7 -> bh;
-            default -> null;
-        };
+		return switch (number) {
+			case 0 -> al;
+			case 1 -> cl;
+			case 2 -> dl;
+			case 3 -> bl;
+			case 4 -> ah;
+			case 5 -> ch;
+			case 6 -> dh;
+			case 7 -> bh;
+			default -> null;
+		};
 	}
 
 	private byte readNextOpcode() {
