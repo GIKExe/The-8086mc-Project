@@ -70,12 +70,12 @@ public class Processor {
 	private MemoryWord[] wordReg = { AX, CX, DX, BX, SP, BP, SI, DI, };
 
 	private final Runnable[] optable = {
-		this::_0x00,
-		this::_0x01,
-		this::_0x02,
-		this::_0x03,
-		this::_0x04,
-		this::_0x05,
+		() -> ADD(false, 0),
+		() -> ADD(true, 0),
+		() -> ADD(false, 1),
+		() -> ADD(true, 1),
+		() -> ADD(false, 2),
+		() -> ADD(true, 2),
 		this::_0x06,
 		this::_0x07,
 		this::_0x08,
@@ -126,13 +126,13 @@ public class Processor {
 		return ModRM.of(readByte());
 	}
 
-	private MemoryAccess[] getOperands(ModRM modrm, boolean itword) {
+	private MemoryAccess[] getOperands(ModRM modrm, boolean isWord) {
 		int rm = modrm.rm;
 		MemoryAccess a;
-		MemoryAccess b = (itword ? wordReg[modrm.reg] : byteReg[modrm.reg]);
+		MemoryAccess b = (isWord ? wordReg[modrm.reg] : byteReg[modrm.reg]);
 
 		if (modrm.mod == 3) {
-			a = (itword ? wordReg[modrm.rm] : byteReg[modrm.rm]);
+			a = (isWord ? wordReg[modrm.rm] : byteReg[modrm.rm]);
 		} else {
 			int addr = 0;
 			if (rm == 0 || rm == 1 || rm == 7) addr += BX.read();
@@ -144,7 +144,7 @@ public class Processor {
 				case 1: addr += readByte(); break;
 				case 0: if (rm == 6) addr = readWord();
 			}
-			if (itword) {
+			if (isWord) {
 				a = new MemoryWord(memory, physicAddr(addr, CS));
 			} else {
 				a = new MemoryByte(memory, physicAddr(addr, CS));
@@ -172,6 +172,24 @@ public class Processor {
 
 	private void _null() { // пустая функция
 
+	}
+
+	private void ADD(boolean isWord, int type) {
+		int value;
+		if (type == 2) {
+			if (isWord) {
+				value = AX.read() + readWord();
+				AX.write(value);
+			} else {
+				value = AL.read() + readByte();
+				AL.write(value);
+			}
+		} else {
+			ModRM modRM = readModRM();
+			MemoryAccess[] ops = getOperands(modRM, isWord);
+			value = ops[0 + type].read() + ops[1 - type].read();
+			ops[0 + type].write(value);
+		}
 	}
 
 	// http://www.mlsite.net/8086/
