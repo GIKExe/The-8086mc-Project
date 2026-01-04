@@ -1,7 +1,10 @@
 package ru.gikexe.the8086mc;
 
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.minecraft.commands.Commands;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
@@ -20,6 +23,13 @@ public class The8086mc implements ModInitializer {
 	public void onInitialize() {
 		ModItems.registerModItems();
 		ModBlocks.registerModBlocks();
+
+		// CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
+		// 	dispatcher.register(Commands.literal("test_command").executes(context -> {
+		// 		context.getSource().sendSuccess(() -> Component.literal("Called /test_command."), false);
+		// 		return 1;
+		// 	}));
+		// });
 	}
 
 	public static ResourceLocation getLocation(String name) {
