@@ -9,24 +9,29 @@ public class MemoryWord implements MemoryAccess {
 		this.offset = offset;
 	}
 
+	public static final MemoryWord of(byte[] memory, int offset) {
+		return new MemoryWord(memory, offset);
+	}
+
 	@Override
 	public int read() {
 		return (memory[offset] & 0xFF) | ((memory[offset+1] & 0xFF) << 8);
 	}
 
 	@Override
-	public void write(int value) {
+	public boolean write(int value) {
 		memory[offset] = (byte) value;
 		memory[offset+1] = (byte) (value >> 8);
+		return (value >>> 16) > 0;
 	}
 
 	@Override
-	public void inc() {
-		write(read() + 1);
+	public boolean inc() {
+		return write(read() + 1);
 	}
 
 	@Override
-	public void dec() {
-		write(read() - 1);
+	public boolean dec() {
+		return write(read() - 1);
 	}
 }

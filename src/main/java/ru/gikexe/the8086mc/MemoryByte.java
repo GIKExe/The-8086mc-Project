@@ -9,23 +9,28 @@ public class MemoryByte implements MemoryAccess {
 		this.offset = offset;
 	}
 
+	public static final MemoryByte of(byte[] memory, int offset) {
+		return new MemoryByte(memory, offset);
+	}
+
 	@Override
 	public int read() {
 		return memory[offset] & 0xFF;
 	}
 
 	@Override
-	public void write(int value) {
+	public boolean write(int value) {
 		memory[offset] = (byte) value;
+		return (value >>> 8) > 0;
 	}
 
 	@Override
-	public void inc() {
-		write(read()+1);
+	public boolean inc() {
+		return write(read()+1);
 	}
 
 	@Override
-	public void dec() {
-		write(read()-1);
+	public boolean dec() {
+		return write(read()-1);
 	}
 }

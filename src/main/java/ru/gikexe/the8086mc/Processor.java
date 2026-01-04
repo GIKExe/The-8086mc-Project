@@ -2,6 +2,23 @@ package ru.gikexe.the8086mc;
 
 public class Processor {
 	private Boolean power = false;
+	private static final int CF = 0b0000_0000_0000_0001; //  0
+																											 //  1
+	private static final int PF = 0b0000_0000_0000_0100; //  2
+																											 //  3
+	private static final int AF = 0b0000_0000_0001_0000; //  4
+																											 //  5
+	private static final int ZF = 0b0000_0000_0100_0000; //  6
+	private static final int SF = 0b0000_0000_1000_0000; //  7
+	private static final int TF = 0b0000_0001_0000_0000; //  8
+	private static final int IF = 0b0000_0010_0000_0000; //  9
+	private static final int DF = 0b0000_0100_0000_0000; // 10
+	private static final int OF = 0b0000_1000_0000_0000; // 11
+																											 // 12
+															 												 // 13
+															 												 // 14
+															 												 // 15
+
 	private byte[] memory;
 	private byte[] registers = {
 		0, 0, // AL, AH = AX 0
@@ -46,7 +63,7 @@ public class Processor {
 	private MemoryWord SS = new MemoryWord(registers, 22);
 
 	private MemoryWord IP = new MemoryWord(registers, 24);
-	private int flags = 0;
+	private int flags = 0b0000_0000_0000_0010;
 
 	// для получения операндов в Mod R/M
 	private MemoryByte[] byteReg = { AL, CL, DL, BL, AH, CH, DH, BH, };
@@ -59,6 +76,16 @@ public class Processor {
 		this::_0x03,
 		this::_0x04,
 		this::_0x05,
+		this::_0x06,
+		this::_0x07,
+		this::_0x08,
+		this::_0x09,
+		this::_0x0A,
+		this::_0x0B,
+		this::_0x0C,
+		this::_0x0D,
+		this::_0x0E,
+		this::_null,
 	};
 
 	public Processor() {
@@ -75,16 +102,17 @@ public class Processor {
 
 	public void clockСycle() {
 		int op = readByte();
+		optable[op].run();
 	}
 
 	// добавить проверки на ошибки!
-	private int physicAddr(int addr) {
+	private int physicAddr(int addr, MemoryWord reg) {
 		// физический аддрес = (CS * 16) + IP
-		return (CS.read() * 16) + addr;
+		return (reg.read() * 16) + addr;
 	}
 
 	private int readByte() {
-		int value = (int) memory[physicAddr(IP.read())];
+		int value = (int) memory[physicAddr(IP.read(), CS)];
 		IP.inc();
 		return (int) value;
 	}
@@ -117,12 +145,29 @@ public class Processor {
 				case 0: if (rm == 6) addr = readWord();
 			}
 			if (itword) {
-				a = new MemoryWord(memory, physicAddr(addr));
+				a = new MemoryWord(memory, physicAddr(addr, CS));
 			} else {
-				a = new MemoryByte(memory, physicAddr(addr));
+				a = new MemoryByte(memory, physicAddr(addr, CS));
 			}
 		}
 		return new MemoryAccess[] {a, b};
+	}
+
+	// private void pushByte(int value) {
+
+	// }
+
+	// private int popByte() {
+
+	// }
+
+	private void pushWord(int value) {
+		SP.write(SP.read() - 2);
+		MemoryWord.of(memory, physicAddr(SP.read(), SS)).write(value);
+	}
+
+	private int popWord() {
+		return MemoryWord.of(memory, physicAddr(SP.read(), SS)).read();
 	}
 
 	private void _null() { // пустая функция
@@ -133,34 +178,119 @@ public class Processor {
 	private void _0x00() { // ADD
 		ModRM modRM = readModRM();
 		MemoryAccess[] ops = getOperands(modRM, false);
-		ops[0].write(ops[0].read() + ops[1].read());
+		if (ops[0].write(ops[0].read() + ops[1].read()))
+			flags |= CF;
+		else
+			flags &= ~CF;
 	}
 
 	private void _0x01() { // ADD
 		ModRM modRM = readModRM();
 		MemoryAccess[] ops = getOperands(modRM, true);
-		ops[0].write(ops[0].read() + ops[1].read());
+		if (ops[0].write(ops[0].read() + ops[1].read()))
+			flags |= CF;
+		else
+			flags &= ~CF;
 	}
 
 	private void _0x02() { // ADD
 		ModRM modRM = readModRM();
 		MemoryAccess[] ops = getOperands(modRM, false);
-		ops[1].write(ops[1].read() + ops[0].read());
+		if (ops[1].write(ops[1].read() + ops[0].read()))
+			flags |= CF;
+		else
+			flags &= ~CF;
 	}
 
 	private void _0x03() { // ADD
 		ModRM modRM = readModRM();
 		MemoryAccess[] ops = getOperands(modRM, true);
-		ops[1].write(ops[1].read() + ops[0].read());
+		if (ops[1].write(ops[1].read() + ops[0].read()))
+			flags |= CF;
+		else
+			flags &= ~CF;
 	}
 
 	private void _0x04() { // ADD
 		int value = readByte();
-		AL.write(value);
+		if (AL.write(AL.read() + value))
+			flags |= CF;
+		else
+			flags &= ~CF;
 	}
 
-	private void _0x05() {
+	private void _0x05() { // ADD
 		int value = readWord();
-		AX.write(value);
+		if (AX.write(AX.read() + value))
+			flags |= CF;
+		else
+			flags &= ~CF;
 	}
+
+	private void _0x06() { // PUSH ES
+		pushWord(ES.read());
+	}
+
+	private void _0x07() { // POP ES
+		ES.write(popWord());
+	}
+
+	private void _0x08() { // OR
+		ModRM modRM = readModRM();
+		MemoryAccess[] ops = getOperands(modRM, false);
+		ops[0].write(ops[0].read() | ops[1].read());
+	}
+
+	private void _0x09() { // OR
+		ModRM modRM = readModRM();
+		MemoryAccess[] ops = getOperands(modRM, true);
+		ops[0].write(ops[0].read() | ops[1].read());
+	}
+
+	private void _0x0A() { // OR
+		ModRM modRM = readModRM();
+		MemoryAccess[] ops = getOperands(modRM, false);
+		ops[1].write(ops[1].read() | ops[0].read());
+	}
+
+	private void _0x0B() { // OR
+		ModRM modRM = readModRM();
+		MemoryAccess[] ops = getOperands(modRM, true);
+		ops[1].write(ops[1].read() | ops[0].read());
+	}
+
+	private void _0x0C() { // OR
+		int value = readByte();
+		AL.write(AL.read() | value);
+	}
+
+	private void _0x0D() { // OR
+		int value = readWord();
+		AX.write(AX.read() | value);
+	}
+
+	private void _0x0E() { // PUSH CS
+		pushWord(CS.read());
+	}
+
+	// удалён в процессорах следующего поколения
+	// private void _0x0F() { // POP CS
+	// 	CS.write(popWord());
+	// }
+
+	// private void _0x06() {}
+	// private void _0x06() {}
+	// private void _0x06() {}
+	// private void _0x06() {}
+	// private void _0x06() {}
+	// private void _0x06() {}
+	// private void _0x06() {}
+	// private void _0x06() {}
+	// private void _0x06() {}
+	// private void _0x06() {}
+	// private void _0x06() {}
+	// private void _0x06() {}
+	// private void _0x06() {}
+	// private void _0x06() {}
+
 }
