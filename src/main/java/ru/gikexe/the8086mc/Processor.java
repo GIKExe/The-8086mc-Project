@@ -153,13 +153,16 @@ public class Processor {
 		return new MemoryAccess[] {a, b};
 	}
 
-	// private void pushByte(int value) {
+	private void pushByte(int value) {
+		SP.write(SP.read() - 1);
+		MemoryByte.of(memory, physicAddr(SP.read(), SS)).write(value);
+	}
 
-	// }
-
-	// private int popByte() {
-
-	// }
+	private int popByte() {
+		int value = MemoryByte.of(memory, physicAddr(SP.read(), SS)).read();
+		SP.write(SP.read() + 1);
+		return value;
+	}
 
 	private void pushWord(int value) {
 		SP.write(SP.read() - 2);
@@ -167,7 +170,9 @@ public class Processor {
 	}
 
 	private int popWord() {
-		return MemoryWord.of(memory, physicAddr(SP.read(), SS)).read();
+		int value = MemoryWord.of(memory, physicAddr(SP.read(), SS)).read();
+		SP.write(SP.read() + 2);
+		return value;
 	}
 
 	private void _null() { // пустая функция
