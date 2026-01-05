@@ -1,5 +1,7 @@
 package ru.gikexe.the8086mc;
 
+import lombok.val;
+
 public class Processor {
 	private Boolean power = false;
 	private static final int CF = 0b0000_0000_0000_0001; //  0
@@ -105,6 +107,14 @@ public class Processor {
 		optable[op].run();
 	}
 
+	private void setFlag(int flag, boolean value) {
+		if (value) {
+			flags |= flag;
+		} else {
+			flags &= ~flag;
+		}
+	}
+
 	// добавить проверки на ошибки!
 	private int physicAddr(int addr, MemoryWord reg) {
 		// физический аддрес = (CS * 16) + IP
@@ -183,53 +193,45 @@ public class Processor {
 	private void _0x00() { // ADD
 		ModRM modRM = readModRM();
 		MemoryAccess[] ops = getOperands(modRM, false);
-		if (ops[0].write(ops[0].read() + ops[1].read()))
-			flags |= CF;
-		else
-			flags &= ~CF;
+		int value = ops[0].read() + ops[1].read();
+		setFlag(CF, ops[0].write(value));
+		setFlag(ZF, (value & 0xFF) == 0);
 	}
 
 	private void _0x01() { // ADD
 		ModRM modRM = readModRM();
 		MemoryAccess[] ops = getOperands(modRM, true);
-		if (ops[0].write(ops[0].read() + ops[1].read()))
-			flags |= CF;
-		else
-			flags &= ~CF;
+		int value = ops[0].read() + ops[1].read();
+		setFlag(CF, ops[0].write(value));
+		setFlag(ZF, (value & 0xFFFF) == 0);
 	}
 
 	private void _0x02() { // ADD
 		ModRM modRM = readModRM();
 		MemoryAccess[] ops = getOperands(modRM, false);
-		if (ops[1].write(ops[1].read() + ops[0].read()))
-			flags |= CF;
-		else
-			flags &= ~CF;
+		int value = ops[1].read() + ops[0].read();
+		setFlag(CF, ops[1].write(value));
+		setFlag(ZF, (value & 0xFF) == 0);
 	}
 
 	private void _0x03() { // ADD
 		ModRM modRM = readModRM();
 		MemoryAccess[] ops = getOperands(modRM, true);
-		if (ops[1].write(ops[1].read() + ops[0].read()))
-			flags |= CF;
-		else
-			flags &= ~CF;
+		int value = ops[1].read() + ops[0].read();
+		setFlag(CF, ops[1].write(value));
+		setFlag(ZF, (value & 0xFFFF) == 0);
 	}
 
 	private void _0x04() { // ADD
-		int value = readByte();
-		if (AL.write(AL.read() + value))
-			flags |= CF;
-		else
-			flags &= ~CF;
+		int value = AL.read() + readByte();
+		setFlag(CF, AL.write(value));
+		setFlag(ZF, (value & 0xFF) == 0);
 	}
 
 	private void _0x05() { // ADD
-		int value = readWord();
-		if (AX.write(AX.read() + value))
-			flags |= CF;
-		else
-			flags &= ~CF;
+		int value = AX.read() + readWord();
+		setFlag(CF, AX.write(value));
+		setFlag(ZF, (value & 0xFFFF) == 0);
 	}
 
 	private void _0x06() { // PUSH ES
