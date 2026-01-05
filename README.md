@@ -2,6 +2,14 @@
 
 Implementation of simple 8086-like computers in Minecraft
 
+The image shows the status of implemented opcodes:
+
+- **Green** — fully implemented and working
+- **Yellow** — partially implemented (in progress)
+- **Red** — not working correctly
+
+![Alt text](emu.png)
+
 ## Building
 
 To build for Fabric 1.21.10:
