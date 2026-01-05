@@ -67,6 +67,8 @@ public class Processor {
 	private MemoryWord IP = new MemoryWord(registers, 24);
 	private int flags = 0b0000_0000_0000_0010;
 
+	private boolean use_ES_segment = false;
+
 	// для получения операндов в Mod R/M
 	private MemoryByte[] byteReg = { AL, CL, DL, BL, AH, CH, DH, BH, };
 	private MemoryWord[] wordReg = { AX, CX, DX, BX, SP, BP, SI, DI, };
@@ -112,6 +114,8 @@ public class Processor {
 		this::_0x23,
 		this::_0x24,
 		this::_0x25,
+		this::_0x26,
+		this::_0x27,
 	};
 
 	public Processor() {
@@ -139,8 +143,8 @@ public class Processor {
 		}
 	}
 
-	private int getFlag(int flag) {
-		return ((flag & flag) == 0 ? 0 : 1);
+	private boolean getFlag(int flag) {
+		return (flags & flag) != 0;
 	}
 
 	// добавить проверки на ошибки!
@@ -316,7 +320,7 @@ public class Processor {
 	private void _0x10() { // ADC
 		ModRM modRM = readModRM();
 		MemoryAccess[] ops = getOperands(modRM, false);
-		int value = ops[0].read() + ops[1].read() + getFlag(CF);
+		int value = ops[0].read() + ops[1].read() + (getFlag(CF) ? 1 : 0);
 		setFlag(CF, ops[0].write(value));
 		setFlag(ZF, (value & 0xFF) == 0);
 	}
@@ -324,7 +328,7 @@ public class Processor {
 	private void _0x11() { // ADC
 		ModRM modRM = readModRM();
 		MemoryAccess[] ops = getOperands(modRM, true);
-		int value = ops[0].read() + ops[1].read() + getFlag(CF);
+		int value = ops[0].read() + ops[1].read() + (getFlag(CF) ? 1 : 0);
 		setFlag(CF, ops[0].write(value));
 		setFlag(ZF, (value & 0xFFFF) == 0);
 	}
@@ -332,7 +336,7 @@ public class Processor {
 	private void _0x12() { // ADC
 		ModRM modRM = readModRM();
 		MemoryAccess[] ops = getOperands(modRM, false);
-		int value = ops[1].read() + ops[0].read() + getFlag(CF);
+		int value = ops[1].read() + ops[0].read() + (getFlag(CF) ? 1 : 0);
 		setFlag(CF, ops[1].write(value));
 		setFlag(ZF, (value & 0xFF) == 0);
 	}
@@ -340,19 +344,19 @@ public class Processor {
 	private void _0x13() { // ADC
 		ModRM modRM = readModRM();
 		MemoryAccess[] ops = getOperands(modRM, true);
-		int value = ops[1].read() + ops[0].read() + getFlag(CF);
+		int value = ops[1].read() + ops[0].read() + (getFlag(CF) ? 1 : 0);
 		setFlag(CF, ops[1].write(value));
 		setFlag(ZF, (value & 0xFFFF) == 0);
 	}
 
 	private void _0x14() { // ADC
-		int value = AL.read() + readByte() + getFlag(CF);
+		int value = AL.read() + readByte() + (getFlag(CF) ? 1 : 0);
 		setFlag(CF, AL.write(value));
 		setFlag(ZF, (value & 0xFF) == 0);
 	}
 
 	private void _0x15() { // ADC
-		int value = AX.read() + readWord() + getFlag(CF);
+		int value = AX.read() + readWord() + (getFlag(CF) ? 1 : 0);
 		setFlag(CF, AX.write(value));
 		setFlag(ZF, (value & 0xFFFF) == 0);
 	}
@@ -368,7 +372,7 @@ public class Processor {
 	private void _0x18() { // SBB
 		ModRM modRM = readModRM();
 		MemoryAccess[] ops = getOperands(modRM, false);
-		int value = ops[0].read() - ops[1].read() - getFlag(CF);
+		int value = ops[0].read() - ops[1].read() - (getFlag(CF) ? 1 : 0);
 		setFlag(CF, ops[0].write(value));
 		setFlag(ZF, (value & 0xFF) == 0);
 	}
@@ -376,7 +380,7 @@ public class Processor {
 	private void _0x19() { // SBB
 		ModRM modRM = readModRM();
 		MemoryAccess[] ops = getOperands(modRM, true);
-		int value = ops[0].read() - ops[1].read() - getFlag(CF);
+		int value = ops[0].read() - ops[1].read() - (getFlag(CF) ? 1 : 0);
 		setFlag(CF, ops[0].write(value));
 		setFlag(ZF, (value & 0xFFFF) == 0);
 	}
@@ -384,7 +388,7 @@ public class Processor {
 	private void _0x1A() { // SBB
 		ModRM modRM = readModRM();
 		MemoryAccess[] ops = getOperands(modRM, false);
-		int value = ops[1].read() - ops[0].read() - getFlag(CF);
+		int value = ops[1].read() - ops[0].read() - (getFlag(CF) ? 1 : 0);
 		setFlag(CF, ops[1].write(value));
 		setFlag(ZF, (value & 0xFF) == 0);
 	}
@@ -392,19 +396,19 @@ public class Processor {
 	private void _0x1B() { // SBB
 		ModRM modRM = readModRM();
 		MemoryAccess[] ops = getOperands(modRM, true);
-		int value = ops[1].read() - ops[0].read() - getFlag(CF);
+		int value = ops[1].read() - ops[0].read() - (getFlag(CF) ? 1 : 0);
 		setFlag(CF, ops[1].write(value));
 		setFlag(ZF, (value & 0xFFFF) == 0);
 	}
 
 	private void _0x1C() { // SBB
-		int value = AL.read() - readByte() - getFlag(CF);
+		int value = AL.read() - readByte() - (getFlag(CF) ? 1 : 0);
 		setFlag(CF, AL.write(value));
 		setFlag(ZF, (value & 0xFF) == 0);
 	}
 
 	private void _0x1D() { // SBB
-		int value = AX.read() - readWord() - getFlag(CF);
+		int value = AX.read() - readWord() - (getFlag(CF) ? 1 : 0);
 		setFlag(CF, AX.write(value));
 		setFlag(ZF, (value & 0xFFFF) == 0);
 	}
@@ -459,5 +463,22 @@ public class Processor {
 		int value = AX.read() & readWord();
 		AX.write(value);
 		setFlag(ZF, (value & 0xFFFF) == 0);
+	}
+
+	private void _0x26() { // ES:
+		use_ES_segment = true;
+	}
+
+	private void _0x27() { // DAA
+		int value = AL.read();
+		if ((value & 0x0F) > 9 || getFlag(AF)) {
+			AL.write(value + 0x06);
+		} else if ((value & 0xF0) > 0x90 || getFlag(CF)) {
+			AL.write(value + 0x60);
+			setFlag(CF, true);
+		} else {
+			setFlag(AF, false);
+			setFlag(CF, false);
+		}
 	}
 }
