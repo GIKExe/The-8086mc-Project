@@ -88,6 +88,15 @@ public class Processor {
 		this::_0x0D,
 		this::_0x0E,
 		this::_null,
+
+		this::_0x10,
+		this::_0x11,
+		this::_0x12,
+		this::_0x13,
+		this::_0x14,
+		this::_0x15,
+		this::_0x16,
+		this::_0x17,
 	};
 
 	public Processor() {
@@ -113,6 +122,10 @@ public class Processor {
 		} else {
 			flags &= ~flag;
 		}
+	}
+
+	private int getFlag(int flag) {
+		return ((flag & flag) == 0 ? 0 : 1);
 	}
 
 	// добавить проверки на ошибки!
@@ -285,19 +298,56 @@ public class Processor {
 	// 	CS.write(popWord());
 	// }
 
-	// private void _0x06() {}
-	// private void _0x06() {}
-	// private void _0x06() {}
-	// private void _0x06() {}
-	// private void _0x06() {}
-	// private void _0x06() {}
-	// private void _0x06() {}
-	// private void _0x06() {}
-	// private void _0x06() {}
-	// private void _0x06() {}
-	// private void _0x06() {}
-	// private void _0x06() {}
-	// private void _0x06() {}
-	// private void _0x06() {}
+	private void _0x10() { // ADC
+		ModRM modRM = readModRM();
+		MemoryAccess[] ops = getOperands(modRM, false);
+		int value = ops[0].read() + ops[1].read() + getFlag(CF);
+		setFlag(CF, ops[0].write(value));
+		setFlag(ZF, (value & 0xFF) == 0);
+	}
+
+	private void _0x11() { // ADC
+		ModRM modRM = readModRM();
+		MemoryAccess[] ops = getOperands(modRM, true);
+		int value = ops[0].read() + ops[1].read() + getFlag(CF);
+		setFlag(CF, ops[0].write(value));
+		setFlag(ZF, (value & 0xFFFF) == 0);
+	}
+
+	private void _0x12() { // ADC
+		ModRM modRM = readModRM();
+		MemoryAccess[] ops = getOperands(modRM, false);
+		int value = ops[1].read() + ops[0].read() + getFlag(CF);
+		setFlag(CF, ops[1].write(value));
+		setFlag(ZF, (value & 0xFF) == 0);
+	}
+
+	private void _0x13() { // ADC
+		ModRM modRM = readModRM();
+		MemoryAccess[] ops = getOperands(modRM, true);
+		int value = ops[1].read() + ops[0].read() + getFlag(CF);
+		setFlag(CF, ops[1].write(value));
+		setFlag(ZF, (value & 0xFFFF) == 0);
+	}
+
+	private void _0x14() { // ADC
+		int value = AL.read() + readByte() + getFlag(CF);
+		setFlag(CF, AL.write(value));
+		setFlag(ZF, (value & 0xFF) == 0);
+	}
+
+	private void _0x15() { // ADC
+		int value = AX.read() + readWord() + getFlag(CF);
+		setFlag(CF, AX.write(value));
+		setFlag(ZF, (value & 0xFFFF) == 0);
+	}
+
+	private void _0x16() { // PUSH SS
+		pushWord(SS.read());
+	}
+
+	private void _0x17() { // POP SS
+		SS.write(popWord());
+	}
 
 }
