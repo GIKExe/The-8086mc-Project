@@ -116,6 +116,12 @@ public class Processor {
 		this::_0x25,
 		this::_0x26,
 		this::_0x27,
+		this::_0x28,
+		this::_0x29,
+		this::_0x2A,
+		this::_0x2B,
+		this::_0x2C,
+		this::_0x2D,
 	};
 
 	public Processor() {
