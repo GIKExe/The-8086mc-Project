@@ -3,9 +3,9 @@ package ru.gikexe.the8086mc;
 public interface MemoryAccess {
 	int read();
 
-	boolean write(int value);
+	void write(int value);
 
-	boolean inc();
+	void inc();
 
-	boolean dec();
+	void dec();
 }

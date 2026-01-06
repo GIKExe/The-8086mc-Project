@@ -68,6 +68,9 @@ public class Processor {
 	private int flags = 0b0000_0000_0000_0010;
 
 	private boolean use_ES_segment = false;
+	private boolean use_CS_segment = false;
+	private boolean use_DS_segment = false;
+	private boolean use_SS_segment = false;
 
 	// для получения операндов в Mod R/M
 	private MemoryByte[] byteReg = { AL, CL, DL, BL, AH, CH, DH, BH, };
@@ -170,13 +173,13 @@ public class Processor {
 		return ModRM.of(readByte());
 	}
 
-	private MemoryAccess[] getOperands(ModRM modrm, boolean itword) {
+	private MemoryAccess[] getOperands(ModRM modrm, boolean isFull) {
 		int rm = modrm.rm;
 		MemoryAccess a;
-		MemoryAccess b = (itword ? wordReg[modrm.reg] : byteReg[modrm.reg]);
+		MemoryAccess b = (isFull ? wordReg[modrm.reg] : byteReg[modrm.reg]);
 
 		if (modrm.mod == 3) {
-			a = (itword ? wordReg[modrm.rm] : byteReg[modrm.rm]);
+			a = (isFull ? wordReg[modrm.rm] : byteReg[modrm.rm]);
 		} else {
 			int addr = 0;
 			if (rm == 0 || rm == 1 || rm == 7) addr += BX.read();
@@ -188,7 +191,7 @@ public class Processor {
 				case 1: addr += readByte(); break;
 				case 0: if (rm == 6) addr = readWord();
 			}
-			if (itword) {
+			if (isFull) {
 				a = new MemoryWord(memory, physicAddr(addr, CS));
 			} else {
 				a = new MemoryByte(memory, physicAddr(addr, CS));
@@ -224,6 +227,47 @@ public class Processor {
 	}
 
 	// http://www.mlsite.net/8086/
+
+	private void ADD(boolean isFull, boolean reverse, boolean immutable) {
+		int a, b, res;
+
+		if (immutable) {
+			MemoryAccess reg;
+			if (isFull) {
+				reg = AX;
+				b = readWord();
+			} else {
+				reg = AL;
+				b = readByte();
+			}
+			a = reg.read();
+			res = a + b;
+			reg.write(res);
+		} else {
+			ModRM modRM = readModRM();
+			MemoryAccess[] ops = getOperands(modRM, isFull);
+			int i = (reverse ? 1 : 0);
+			a = ops[0+i].read();
+			b = ops[1-i].read();
+			res = a + b;
+			ops[0+i].write(res);
+		}
+
+		if (isFull) {
+			setFlag(CF, (res & 0x10000) != 0);
+			setFlag(ZF, (res & 0xFFFF) == 0);
+			setFlag(SF, (res & 0x8000) != 0);
+			setFlag(AF, ((a & 0x0F) + (b & 0x0F)) > 0x0F);
+			setFlag(OF, ((((a & 0x4000) + (b & 0x4000)) & 0x8000) != 0) ^ ((res & 0x10000) != 0));
+		} else {
+			setFlag(CF, (res & 0x100) != 0);
+			setFlag(ZF, (res & 0xFF) == 0);
+			setFlag(SF, (res & 0x80) != 0);
+			setFlag(AF, ((a & 0x0F) + (b & 0x0F)) > 0x0F);
+			setFlag(OF, ((((a & 0x40) + (b & 0x40)) & 0x80) != 0) ^ ((res & 0x100) != 0));
+		}
+	}
+
 	private void _0x00() { // ADD
 		ModRM modRM = readModRM();
 		MemoryAccess[] ops = getOperands(modRM, false);
@@ -231,47 +275,76 @@ public class Processor {
 		int b = ops[1].read();
 		int res = a + b;
 		ops[0].write(res);
-		setFlag(CF, res > 0xFF);
+		setFlag(CF, (res & 0x100) != 0);
 		setFlag(ZF, (res & 0xFF) == 0);
 		setFlag(SF, (res & 0x80) != 0);
 		setFlag(AF, ((a & 0x0F) + (b & 0x0F)) > 0x0F);
-		setFlag(OF, ((((a & 0x40) + (b & 0x40)) & 0x80) != 0) ^ (res > 0xFF));
+		setFlag(OF, ((((a & 0x40) + (b & 0x40)) & 0x80) != 0) ^ ((res & 0x100) != 0));
 	}
 
 	private void _0x01() { // ADD
 		ModRM modRM = readModRM();
 		MemoryAccess[] ops = getOperands(modRM, true);
-		int value = ops[0].read() + ops[1].read();
-		setFlag(CF, ops[0].write(value));
-		setFlag(ZF, (value & 0xFFFF) == 0);
+		int a = ops[0].read();
+		int b = ops[1].read();
+		int res = a + b;
+		ops[0].write(res);
+		setFlag(CF, (res & 0x10000) != 0);
+		setFlag(ZF, (res & 0xFFFF) == 0);
+		setFlag(SF, (res & 0x8000) != 0);
+		setFlag(AF, ((a & 0x0F) + (b & 0x0F)) > 0x0F);
+		setFlag(OF, ((((a & 0x4000) + (b & 0x4000)) & 0x8000) != 0) ^ ((res & 0x10000) != 0));
 	}
 
 	private void _0x02() { // ADD
 		ModRM modRM = readModRM();
 		MemoryAccess[] ops = getOperands(modRM, false);
-		int value = ops[1].read() + ops[0].read();
-		setFlag(CF, ops[1].write(value));
-		setFlag(ZF, (value & 0xFF) == 0);
+		int a = ops[1].read();
+		int b = ops[0].read();
+		int res = a + b;
+		ops[1].write(res);
+		setFlag(CF, (res & 0x100) != 0);
+		setFlag(ZF, (res & 0xFF) == 0);
+		setFlag(SF, (res & 0x80) != 0);
+		setFlag(AF, ((a & 0x0F) + (b & 0x0F)) > 0x0F);
+		setFlag(OF, ((((a & 0x40) + (b & 0x40)) & 0x80) != 0) ^ ((res & 0x100) != 0));
 	}
 
 	private void _0x03() { // ADD
 		ModRM modRM = readModRM();
 		MemoryAccess[] ops = getOperands(modRM, true);
-		int value = ops[1].read() + ops[0].read();
-		setFlag(CF, ops[1].write(value));
-		setFlag(ZF, (value & 0xFFFF) == 0);
+		int a = ops[1].read();
+		int b = ops[0].read();
+		int res = a + b;
+		setFlag(CF, (res & 0x10000) != 0);
+		setFlag(ZF, (res & 0xFFFF) == 0);
+		setFlag(SF, (res & 0x8000) != 0);
+		setFlag(AF, ((a & 0x0F) + (b & 0x0F)) > 0x0F);
+		setFlag(OF, ((((a & 0x4000) + (b & 0x4000)) & 0x8000) != 0) ^ ((res & 0x10000) != 0));
 	}
 
 	private void _0x04() { // ADD
-		int value = AL.read() + readByte();
-		setFlag(CF, AL.write(value));
-		setFlag(ZF, (value & 0xFF) == 0);
+		int a =  AL.read();
+		int b = readByte();
+		int res = a + b;
+		AL.write(res);
+		setFlag(CF, (res & 0x100) != 0);
+		setFlag(ZF, (res & 0xFF) == 0);
+		setFlag(SF, (res & 0x80) != 0);
+		setFlag(AF, ((a & 0x0F) + (b & 0x0F)) > 0x0F);
+		setFlag(OF, ((((a & 0x40) + (b & 0x40)) & 0x80) != 0) ^ ((res & 0x100) != 0));
 	}
 
 	private void _0x05() { // ADD
-		int value = AX.read() + readWord();
-		setFlag(CF, AX.write(value));
-		setFlag(ZF, (value & 0xFFFF) == 0);
+		int a = AX.read();
+		int b = readWord();
+		int res = a + b;
+		AX.write(res);
+		setFlag(CF, (res & 0x10000) != 0);
+		setFlag(ZF, (res & 0xFFFF) == 0);
+		setFlag(SF, (res & 0x8000) != 0);
+		setFlag(AF, ((a & 0x0F) + (b & 0x0F)) > 0x0F);
+		setFlag(OF, ((((a & 0x4000) + (b & 0x4000)) & 0x8000) != 0) ^ ((res & 0x10000) != 0));
 	}
 
 	private void _0x06() { // PUSH ES
@@ -329,44 +402,38 @@ public class Processor {
 		ModRM modRM = readModRM();
 		MemoryAccess[] ops = getOperands(modRM, false);
 		int value = ops[0].read() + ops[1].read() + (getFlag(CF) ? 1 : 0);
-		setFlag(CF, ops[0].write(value));
-		setFlag(ZF, (value & 0xFF) == 0);
+		ops[0].write(value);
 	}
 
 	private void _0x11() { // ADC
 		ModRM modRM = readModRM();
 		MemoryAccess[] ops = getOperands(modRM, true);
 		int value = ops[0].read() + ops[1].read() + (getFlag(CF) ? 1 : 0);
-		setFlag(CF, ops[0].write(value));
-		setFlag(ZF, (value & 0xFFFF) == 0);
+		ops[0].write(value);
 	}
 
 	private void _0x12() { // ADC
 		ModRM modRM = readModRM();
 		MemoryAccess[] ops = getOperands(modRM, false);
 		int value = ops[1].read() + ops[0].read() + (getFlag(CF) ? 1 : 0);
-		setFlag(CF, ops[1].write(value));
-		setFlag(ZF, (value & 0xFF) == 0);
+		ops[1].write(value);
 	}
 
 	private void _0x13() { // ADC
 		ModRM modRM = readModRM();
 		MemoryAccess[] ops = getOperands(modRM, true);
 		int value = ops[1].read() + ops[0].read() + (getFlag(CF) ? 1 : 0);
-		setFlag(CF, ops[1].write(value));
-		setFlag(ZF, (value & 0xFFFF) == 0);
+		ops[1].write(value);
 	}
 
 	private void _0x14() { // ADC
 		int value = AL.read() + readByte() + (getFlag(CF) ? 1 : 0);
-		setFlag(CF, AL.write(value));
-		setFlag(ZF, (value & 0xFF) == 0);
+		AL.write(value);
 	}
 
 	private void _0x15() { // ADC
 		int value = AX.read() + readWord() + (getFlag(CF) ? 1 : 0);
-		setFlag(CF, AX.write(value));
-		setFlag(ZF, (value & 0xFFFF) == 0);
+		AX.write(value);
 	}
 
 	private void _0x16() { // PUSH SS
@@ -381,44 +448,38 @@ public class Processor {
 		ModRM modRM = readModRM();
 		MemoryAccess[] ops = getOperands(modRM, false);
 		int value = ops[0].read() - ops[1].read() - (getFlag(CF) ? 1 : 0);
-		setFlag(CF, ops[0].write(value));
-		setFlag(ZF, (value & 0xFF) == 0);
+		ops[0].write(value);
 	}
 
 	private void _0x19() { // SBB
 		ModRM modRM = readModRM();
 		MemoryAccess[] ops = getOperands(modRM, true);
 		int value = ops[0].read() - ops[1].read() - (getFlag(CF) ? 1 : 0);
-		setFlag(CF, ops[0].write(value));
-		setFlag(ZF, (value & 0xFFFF) == 0);
+		ops[0].write(value);
 	}
 
 	private void _0x1A() { // SBB
 		ModRM modRM = readModRM();
 		MemoryAccess[] ops = getOperands(modRM, false);
 		int value = ops[1].read() - ops[0].read() - (getFlag(CF) ? 1 : 0);
-		setFlag(CF, ops[1].write(value));
-		setFlag(ZF, (value & 0xFF) == 0);
+		ops[1].write(value);
 	}
 
 	private void _0x1B() { // SBB
 		ModRM modRM = readModRM();
 		MemoryAccess[] ops = getOperands(modRM, true);
 		int value = ops[1].read() - ops[0].read() - (getFlag(CF) ? 1 : 0);
-		setFlag(CF, ops[1].write(value));
-		setFlag(ZF, (value & 0xFFFF) == 0);
+		ops[1].write(value);
 	}
 
 	private void _0x1C() { // SBB
 		int value = AL.read() - readByte() - (getFlag(CF) ? 1 : 0);
-		setFlag(CF, AL.write(value));
-		setFlag(ZF, (value & 0xFF) == 0);
+		AL.write(value);
 	}
 
 	private void _0x1D() { // SBB
 		int value = AX.read() - readWord() - (getFlag(CF) ? 1 : 0);
-		setFlag(CF, AX.write(value));
-		setFlag(ZF, (value & 0xFFFF) == 0);
+		AX.write(value);
 	}
 
 	private void _0x1E() { // PUSH DS
@@ -533,4 +594,109 @@ public class Processor {
 		AX.write(value);
 		setFlag(ZF, (value & 0xFFFF) == 0);
 	}
+
+	private void _0x2E() { // CS:
+		use_CS_segment = true;
+	}
+
+	private void _0x2F() { // DAS
+
+	}
+
+	private void _0x30() { // XOR
+		ModRM modRM = readModRM();
+		MemoryAccess[] ops = getOperands(modRM, false);
+		int a = ops[0].read();
+		int b = ops[1].read();
+		int res = a ^ b;
+		ops[0].write(res);
+	}
+
+	private void _0x31() { // XOR
+		ModRM modRM = readModRM();
+		MemoryAccess[] ops = getOperands(modRM, true);
+		int a = ops[0].read();
+		int b = ops[1].read();
+		int res = a ^ b;
+		ops[0].write(res);
+	}
+
+	private void _0x32() { // XOR
+		ModRM modRM = readModRM();
+		MemoryAccess[] ops = getOperands(modRM, false);
+		int a = ops[1].read();
+		int b = ops[0].read();
+		int res = a ^ b;
+		ops[1].write(res);
+	}
+
+	private void _0x33() { // XOR
+		ModRM modRM = readModRM();
+		MemoryAccess[] ops = getOperands(modRM, true);
+		int a = ops[1].read();
+		int b = ops[0].read();
+		int res = a ^ b;
+		ops[1].write(res);
+	}
+
+	private void _0x34() { // XOR
+		int a = AL.read();
+		int b = readByte();
+		int res = a ^ b;
+		AL.write(res);
+	}
+
+	private void _0x35() { // XOR
+		int a = AX.read();
+		int b = readWord();
+		int res = a ^ b;
+		AX.write(res);
+	}
+
+	private void _0x36() { // SS:
+		use_SS_segment = true;
+	}
+
+	private void _0x37() { // AAA
+
+	}
+
+	private void _0x38() { // CMP
+		ModRM modRM = readModRM();
+		MemoryAccess[] ops = getOperands(modRM, false);
+		int a = ops[0].read();
+		int b = ops[1].read();
+	}
+
+	private void _0x39() { // CMP
+		ModRM modRM = readModRM();
+		MemoryAccess[] ops = getOperands(modRM, true);
+		int a = ops[0].read();
+		int b = ops[1].read();
+	}
+
+	private void _0x3A() { // CMP
+		ModRM modRM = readModRM();
+		MemoryAccess[] ops = getOperands(modRM, false);
+		int a = ops[1].read();
+		int b = ops[0].read();
+	}
+
+	private void _0x3B() { // CMP
+		ModRM modRM = readModRM();
+		MemoryAccess[] ops = getOperands(modRM, true);
+		int a = ops[1].read();
+		int b = ops[0].read();
+	}
+
+	private void _0x3C() { // CMP
+		int a = AL.read();
+		int b = readByte();
+	}
+
+	private void _0x3D() { // CMP
+		int a = AX.read();
+		int b = readWord();
+	}
+
 }

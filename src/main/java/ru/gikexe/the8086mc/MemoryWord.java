@@ -19,19 +19,18 @@ public class MemoryWord implements MemoryAccess {
 	}
 
 	@Override
-	public boolean write(int value) {
+	public void write(int value) {
 		memory[offset] = (byte) value;
 		memory[offset+1] = (byte) (value >> 8);
-		return (value >>> 16) > 0;
 	}
 
 	@Override
-	public boolean inc() {
-		return write(read() + 1);
+	public void inc() {
+		write(read() + 1);
 	}
 
 	@Override
-	public boolean dec() {
-		return write(read() - 1);
+	public void dec() {
+		write(read() - 1);
 	}
 }
