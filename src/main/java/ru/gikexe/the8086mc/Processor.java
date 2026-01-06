@@ -142,11 +142,7 @@ public class Processor {
 	}
 
 	private void setFlag(int flag, boolean value) {
-		if (value) {
-			flags |= flag;
-		} else {
-			flags &= ~flag;
-		}
+		if (value) {flags |= flag;} else flags &= ~flag;
 	}
 
 	private boolean getFlag(int flag) {
@@ -231,9 +227,15 @@ public class Processor {
 	private void _0x00() { // ADD
 		ModRM modRM = readModRM();
 		MemoryAccess[] ops = getOperands(modRM, false);
-		int value = ops[0].read() + ops[1].read();
-		setFlag(CF, ops[0].write(value));
-		setFlag(ZF, (value & 0xFF) == 0);
+		int a = ops[0].read();
+		int b = ops[1].read();
+		int res = a + b;
+		ops[0].write(res);
+		setFlag(CF, res > 0xFF);
+		setFlag(ZF, (res & 0xFF) == 0);
+		setFlag(SF, (res & 0x80) != 0);
+		setFlag(AF, ((a & 0x0F) + (b & 0x0F)) > 0x0F);
+		setFlag(OF, ((((a & 0x40) + (b & 0x40)) & 0x80) != 0) ^ (res > 0xFF));
 	}
 
 	private void _0x01() { // ADD
